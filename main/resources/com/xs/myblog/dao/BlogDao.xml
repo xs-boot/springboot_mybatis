@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xs.myblog.dao.BlogDao">
+
+    <resultMap id="blogType" type="com.xs.myblog.pojo.Blog">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="recommend" column="recommend"/>
+        <result property="published" column="published"/>
+        <result property="type.id" column="type_id"/>
+        <association property="type" javaType="com.xs.myblog.pojo.Type">
+            <id property="id" column="id"/>
+            <result property="name" column="name"/>
+        </association>
+    </resultMap>
+
+    <resultMap id="blogTypeTag" type="com.xs.myblog.pojo.Blog">
+        <id property="id" column="id"/>
+        <result property="flag" column="flag"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="recommend" column="recommend"/>
+        <result property="published" column="published"/>
+        <result property="type.id" column="type_id"/>
+        <result property="firstPicture" column="first_picture"/>
+        <result property="description" column="description"/>
+        <result property="appreciation" column="appreciation"/>
+        <result property="commentabled" column="commentabled"/>
+        <result property="shareStatement" column="share_statement"/>
+        <association property="type" javaType="com.xs.myblog.pojo.Type">
+            <id property="id" column="t_id"/>
+            <result property="name" column="t_name"/>
+        </association>
+        <collection property="tags" javaType="list" ofType="com.xs.myblog.pojo.Tag">
+            <id property="id" column="tag_id"/>
+            <result property="name" column="tag_name"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="blogTypeTagUser" type="com.xs.myblog.pojo.Blog">
+        <id property="id" column="id"/>
+        <result property="flag" column="flag"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="views" column="views"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="recommend" column="recommend"/>
+        <result property="published" column="published"/>
+        <result property="type.id" column="type_id"/>
+        <result property="firstPicture" column="first_picture"/>
+        <result property="description" column="description"/>
+        <result property="appreciation" column="appreciation"/>
+        <result property="commentabled" column="commentabled"/>
+        <result property="shareStatement" column="share_statement"/>
+        <association property="type" javaType="com.xs.myblog.pojo.Type">
+            <id property="id" column="t_id"/>
+            <result property="name" column="t_name"/>
+        </association>
+        <association property="user" javaType="com.xs.myblog.pojo.User">
+            <id property="id" column="u_id"/>
+            <result property="nickname" column="nickname"/>
+            <result property="avatar" column="avatar"/>
+        </association>
+        <collection property="tags" javaType="list" ofType="com.xs.myblog.pojo.Tag">
+            <id property="id" column="tag_id"/>
+            <result property="name" column="tag_name"/>
+        </collection>
+    </resultMap>
+
+    <insert id="insertBlog" useGeneratedKeys="true" keyProperty="id">
+        insert into t_blog (id,title, content, first_picture, flag,
+                                   views,  appreciation, share_statement, commentabled, published,
+                                   recommend, create_time, update_time, type_id, user_id, description)
+        values (#{id},#{title},#{content},#{firstPicture},#{flag},#{views},#{appreciation},
+                #{shareStatement},#{commentabled},#{published},#{recommend},#{createTime},
+                #{updateTime},#{type.id},#{user.id},#{description});
+    </insert>
+
+    <update id="updateBlog" parameterType="com.xs.myblog.pojo.Blog">
+        update myblog.t_blog set published = #{published},flag = #{flag} ,
+        title = #{title}, content = #{content}, type_id = #{type.id},
+        first_picture = #{firstPicture} , description = #{description} , recommend = #{recommend} ,
+        share_statement = #{shareStatement}, appreciation = #{appreciation},
+        commentabled = #{commentabled} ,update_time = #{updateTime} where id = #{id};
+    </update>
+
+    <update id="updateViews">
+        UPDATE t_blog b
+        SET b.views = b.views + 1
+        WHERE
+            b.id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from t_blog where id = #{id}
+    </delete>
+
+
+    <select id="findAll" resultMap="blogType">
+        select b.id,b.title,b.update_time,b.recommend,b.published,b.type_id,t.id,t.name from myblog.t_blog b
+            left outer join
+        myblog.t_type t on b.type_id = t.id order by b.update_time desc
+    </select>
+
+    <select id="getBlogById" resultMap="blogTypeTag">
+        SELECT
+            b.*,
+            t.id t_id,t.name t_name,
+            tag.id tag_id,tag.name tag_name
+        FROM
+            t_blog b
+                JOIN t_type t ON b.type_id = t.id
+                JOIN t_blog_tags bt ON b.id = bt.blogs_id
+                JOIN t_tag tag ON tag.id = bt.tags_id
+        WHERE
+            b.id = #{id}
+    </select>
+
+    <select id="findById" resultType="com.xs.myblog.pojo.Blog">
+        select * from t_blog where id = #{id}
+    </select>
+
+    <select id="searchBlog" resultMap="blogTypeTag">
+        SELECT
+            b.*,
+            t.id t_id,
+            t.NAME t_name,
+            tag.id tag_id,
+            tag.NAME tag_name
+        FROM
+            t_blog b
+                JOIN t_type t ON b.type_id = t.id
+                JOIN t_blog_tags bt ON b.id = bt.blogs_id
+                JOIN t_tag tag ON tag.id = bt.tags_id
+        <where>
+            <if test="title != null and title != ''">
+                b.title LIKE "%"#{title}"%"
+            </if>
+            <if test="type.id != null">
+                AND b.type_id = #{type.id}
+            </if>
+            <if test="recommend != null">
+                AND b.recommend = #{recommend}
+            </if>
+        </where>
+    </select>
+
+    <select id="findTopByRecommend" resultType="com.xs.myblog.pojo.Blog">
+        SELECT
+            *
+        FROM
+            t_blog b
+        WHERE
+            b.recommend = TRUE
+            LIMIT #{size};
+    </select>
+
+    <select id="findAllByUser" resultMap="blogTypeTagUser">
+        SELECT
+            b.*,
+            t.id t_id,
+            t.NAME t_name,
+            tag.id tag_id,
+            tag.NAME tag_name,
+            u.id u_id,
+            u.nickname,
+            u.avatar
+        FROM
+            t_blog b
+                JOIN t_type t ON b.type_id = t.id
+                JOIN t_blog_tags bt ON b.id = bt.blogs_id
+                JOIN t_tag tag ON tag.id = bt.tags_id
+                JOIN t_user u ON b.user_id = u.id
+        WHERE
+            u.id = #{id}
+    </select>
+
+    <select id="findByTypeId" resultMap="blogTypeTagUser">
+        SELECT
+            b.*,
+            t.id t_id,
+            t.NAME t_name,
+            tag.id tag_id,
+            tag.NAME tag_name,
+            u.id u_id,
+            u.nickname,
+            u.avatar
+        FROM
+            t_blog b
+                JOIN t_type t ON b.type_id = t.id
+                JOIN t_blog_tags bt ON b.id = bt.blogs_id
+                JOIN t_tag tag ON tag.id = bt.tags_id
+                JOIN t_user u ON b.user_id = u.id
+        WHERE b.type_id = #{typeId}
+    </select>
+
+    <select id="findByTagId" resultMap="blogTypeTagUser">
+        SELECT
+            b.*,
+            t.id t_id,
+            t.NAME t_name,
+            tag.id tag_id,
+            tag.NAME tag_name,
+            u.id u_id,
+            u.nickname,
+            u.avatar
+        FROM
+            t_blog b
+                JOIN t_type t ON b.type_id = t.id
+                JOIN t_blog_tags bt ON b.id = bt.blogs_id
+                JOIN t_tag tag ON tag.id = bt.tags_id
+                JOIN t_user u ON b.user_id = u.id
+        WHERE
+            tag.id = #{tagId}
+    </select>
+
+    <select id="getAllBlogAndUserById" resultMap="blogTypeTagUser">
+        SELECT
+            b.*,
+            t.id t_id,
+            t.NAME t_name,
+            tag.id tag_id,
+            tag.NAME tag_name,
+            u.id u_id,
+            u.nickname,
+            u.avatar
+        FROM
+            t_blog b
+                JOIN t_type t ON b.type_id = t.id
+                JOIN t_blog_tags bt ON b.id = bt.blogs_id
+                JOIN t_tag tag ON tag.id = bt.tags_id
+                JOIN t_user u ON b.user_id = u.id
+        WHERE
+            u.id = #{param1} and b.id = #{param2}
+    </select>
+
+    <select id="searchBlogByQuery" resultMap="blogTypeTagUser">
+        SELECT
+            b.*,
+            t.id t_id,
+            t.NAME t_name,
+            tag.id tag_id,
+            tag.NAME tag_name,
+            u.id u_id,
+            u.nickname,
+            u.avatar
+        FROM
+            t_blog b
+                JOIN t_type t ON b.type_id = t.id
+                JOIN t_blog_tags bt ON b.id = bt.blogs_id
+                JOIN t_tag tag ON tag.id = bt.tags_id
+                JOIN t_user u ON b.user_id = u.id
+        WHERE
+            b.content LIKE "%"#{query}"%"
+           OR b.description LIKE "%"#{query}"%"
+           OR b.title LIKE "%"#{query}"%"
+    </select>
+
+    <select id="findGroupYear" resultType="java.lang.String">
+        SELECT YEAR(b.create_time) year FROM t_blog b GROUP BY YEAR(b.create_time)
+    </select>
+
+    <select id="count" resultType="java.lang.Long">
+        SELECT count(*) FROM t_blog
+    </select>
+
+    <select id="findByYear" resultMap="blogTypeTagUser">
+        SELECT
+            b.*,
+            t.id t_id,
+            t.NAME t_name,
+            tag.id tag_id,
+            tag.NAME tag_name,
+            u.id u_id,
+            u.nickname,
+            u.avatar
+        FROM
+            t_blog b
+                JOIN t_type t ON b.type_id = t.id
+                JOIN t_blog_tags bt ON b.id = bt.blogs_id
+                JOIN t_tag tag ON tag.id = bt.tags_id
+                JOIN t_user u ON b.user_id = u.id
+        WHERE
+            u.id = 1 and YEAR(b.create_time) = #{year}
+    </select>
+</mapper>

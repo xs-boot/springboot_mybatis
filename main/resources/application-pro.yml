@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/myblog?serverTimezone=UTC
+    username: root
+    password: 231599
+
+
+logging:
+  level:
+    root: info
+    com.xs.myblog: debug
+  file:
+    path: /log/
+    name: blog-dev.log
+
+mybatis:
+  type-aliases-package: com.xs.myblog.pojo
+  mapper-locations: classpath:com.xs.myblog.dao/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+server:
+  port: 8081
+
+
+

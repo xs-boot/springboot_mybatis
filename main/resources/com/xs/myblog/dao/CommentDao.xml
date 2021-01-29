@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xs.myblog.dao.CommentDao">
+    <insert id="save">
+        insert into t_comment (nickname,email,content,avatar,create_time,blog_id,parent_comment_id,admin_comment)
+        values (#{nickname},#{email},#{content},#{avatar},#{createTime},#{blog.id},#{parentComment.id},#{adminComment});
+    </insert>
+
+    <update id="updateCommentTop">
+        update t_comment c set c.top = #{param1} where c.id = #{param2}
+    </update>
+
+    <delete id="deleteCommentById">
+        delete from t_comment where id = #{commentId}
+    </delete>
+
+    <select id="findByBlogIdAndParentCommentNull" resultType="com.xs.myblog.pojo.Comment">
+        SELECT
+            *
+        FROM
+            t_comment c
+        WHERE
+            c.parent_comment_id IS NULL
+          AND c.blog_id = #{blogId}
+        ORDER BY
+            c.create_time DESC
+    </select>
+
+    <select id="findById" resultType="com.xs.myblog.pojo.Comment">
+        select * from t_comment c where c.id = #{parentCommentId}
+    </select>
+
+
+    <select id="findByBlogIdParentIdNull" resultType="com.xs.myblog.pojo.Comment">
+        select *
+        from myblog.t_comment c
+        where c.blog_id = #{blogId} and c.parent_comment_id = #{blogParentId}
+        order by c.create_time desc
+    </select>
+
+    <!--查询一级子评论-->
+    <select id="findByBlogIdParentIdNotNull" resultType="com.xs.myblog.pojo.Comment">
+        select *
+        from myblog.t_comment c
+        where c.blog_id = #{blogId} and c.parent_comment_id = #{id}
+        order by c.create_time desc
+    </select>
+
+    <!--查询二级子评论-->
+    <select id="findByBlogIdAndReplayId" resultType="com.xs.myblog.pojo.Comment">
+        select *
+        from myblog.t_comment c
+        where c.blog_id = #{blogId} and c.parent_comment_id = #{childId}
+        order by c.create_time desc
+    </select>
+</mapper>
